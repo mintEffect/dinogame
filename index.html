@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chrome Dinosaur Game</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+      overflow: hidden;
+    }
+
+    canvas {
+      background-color: #f0f0f0;
+      border: 1px solid #000;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="200"></canvas>
+  <div id="gameOver" class="hidden">
+    <h2>Game Over</h2>
+    <button onclick="startGame()">Play Again</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const gameOverScreen = document.getElementById('gameOver');
+    const gravity = 0.6;
+    const jumpHeight = -10;
+
+    let dino = {
+      x: 50,
+      y: canvas.height - 50,
+      width: 40,
+      height: 40,
+      velocityY: 0,
+      jumping: false
+    };
+
+    let obstacles = [];
+    let score = 0;
+    let gameRunning = true;
+
+    // 게임 루프
+    function gameLoop() {
+      if (!gameRunning) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      updateDino();
+      drawDino();
+
+      updateObstacles();
+      drawObstacles();
+
+      checkCollisions();
+
+      score++;
+      drawScore();
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // 공룡의 움직임
+    function updateDino() {
+      if (dino.jumping) {
+        dino.velocityY += gravity;
+        dino.y += dino.velocityY;
+        if (dino.y >= canvas.height - 50) {
+          dino.y = canvas.height - 50;
+          dino.jumping = false;
+          dino.velocityY = 0;
+        }
+      }
+    }
+
+    function drawDino() {
+      ctx.fillStyle = '#32CD32';
+      ctx.fillRect(dino.x, dino.y, dino.width, dino.height);
+    }
+
+    // 점프 처리
+    function jump() {
+      if (!dino.jumping) {
+        dino.jumping = true;
+        dino.velocityY = jumpHeight;
+      }
+    }
+
+    // 장애물 생성 및 업데이트
+    function updateObstacles() {
+      if (Math.random() < 0.02) {
+        let height = Math.random() * (canvas.height - 50) + 20;
+        obstacles.push({ x: canvas.width, y: canvas.height - height, width: 20, height: height });
+      }
+
+      for (let i = 0; i < obstacles.length; i++) {
+        obstacles[i].x -= 5;
+      }
+
+      obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
+    }
+
+    function drawObstacles() {
+      ctx.fillStyle = '#FF6347';
+      for (let obstacle of obstacles) {
+        ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+      }
+    }
+
+    // 충돌 검사
+    function checkCollisions() {
+      for (let obstacle of obstacles) {
+        if (dino.x < obstacle.x + obstacle.width &&
+            dino.x + dino.width > obstacle.x &&
+            dino.y < obstacle.y + obstacle.height &&
+            dino.y + dino.height > obstacle.y) {
+          gameOver();
+        }
+      }
+    }
+
+    // 점수 표시
+    function drawScore() {
+      ctx.font = '20px Arial';
+      ctx.fillStyle = '#000';
+      ctx.fillText('Score: ' + score, 10, 30);
+    }
+
+    // 게임 종료 처리
+    function gameOver() {
+      gameRunning = false;
+      gameOverScreen.classList.remove('hidden');
+    }
+
+    // 게임 시작 함수
+    function startGame() {
+      gameRunning = true;
+      gameOverScreen.classList.add('hidden');
+      score = 0;
+      obstacles = [];
+      dino.y = canvas.height - 50;
+      dino.jumping = false;
+      dino.velocityY = 0;
+      gameLoop();
+    }
+
+    // 키 이벤트 처리
+    window.addEventListener('keydown', function (event) {
+      if (event.code === 'Space' || event.code === 'ArrowUp') {
+        jump();
+      }
+    });
+
+    startGame();
+  </script>
+</body>
+</html>
